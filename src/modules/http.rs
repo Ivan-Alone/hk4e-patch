@@ -43,6 +43,12 @@ unsafe fn update_server_url() {
                 flag_srv_next = true;
             }
         }
+        
+        if !flag_srv_next {
+            println!("The argument that overrides the game server was not found! The default local address will be used.");
+        }
+        
+        println!("Current game server: {SERVER_URL_BASE}");
     }
 }
 
