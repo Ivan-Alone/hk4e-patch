@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, env};
 
 use super::{MhyContext, MhyModule, ModuleType};
 use crate::marshal;
@@ -26,6 +26,26 @@ impl MhyModule for MhyContext<Http> {
     }
 }
 
+static mut SERVER_URL_BASE: String = String::new();
+
+unsafe fn update_server_url() {
+    if SERVER_URL_BASE == "" {
+        SERVER_URL_BASE = String::from("http://127.0.0.1:21000");
+
+        let mut flag_srv_next = false;
+
+        for arg in env::args() {
+            if flag_srv_next {
+                SERVER_URL_BASE = String::from(arg);
+
+                break;
+            } else if arg.to_lowercase() == "--server" {
+                flag_srv_next = true;
+            }
+        }
+    }
+}
+
 unsafe extern "win64" fn on_uwr_set_url(reg: *mut Registers, _: usize) {
     let str_length = *((*reg).rdx.wrapping_add(16) as *const u32);
     let str_ptr = (*reg).rdx.wrapping_add(20) as *const u8;
@@ -33,7 +53,9 @@ unsafe extern "win64" fn on_uwr_set_url(reg: *mut Registers, _: usize) {
     let slice = std::slice::from_raw_parts(str_ptr, (str_length * 2) as usize);
     let url = String::from_utf16le(slice).unwrap();
 
-    let mut new_url = String::from("http://127.0.0.1:21000");
+    update_server_url();
+
+    let mut new_url = SERVER_URL_BASE.clone();
     url.split('/').skip(3).for_each(|s| {
         new_url.push_str("/");
         new_url.push_str(s);

@@ -1,6 +1,6 @@
 #![feature(str_from_utf16_endian)]
 
-use std::{sync::RwLock, time::Duration};
+use std::{sync::RwLock, time::Duration, env, path::Path};
 
 use lazy_static::lazy_static;
 use util::try_get_base_address;
@@ -29,7 +29,18 @@ unsafe fn thread_func() {
     std::thread::sleep(Duration::from_secs(7));
 
     util::disable_memprotect_guard();
-    Console::AllocConsole().unwrap();
+    
+    let mut do_run_console = !Path::new(".noconsole").exists();
+    
+    for arg in env::args() {
+        if arg.to_lowercase() == "--no-console" {
+            do_run_console = false;
+        }
+    }
+    
+    if do_run_console {
+        Console::AllocConsole().unwrap();
+    }
 
     println!("Genshin Impact encryption patch\nMade by xeondev\nTo work with NaviaImpact: git.xeondev.com/reversedrooms/NaviaImpact");
     println!("UserAssembly: {:X}", base);
